@@ -83,7 +83,11 @@ function test1() {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const num = Math.floor(Math.random() * 6) + 1;
-
+        if (num >= 4) {
+          resolve(num);
+        } else {
+          reject(num);
+        }
         // TODO: num이 4 이상이면 resolve, 아니면 reject 하세요
       }, 1000);
     });
@@ -92,6 +96,9 @@ function test1() {
   // TODO: rollDice()를 호출하고 .then()과 .catch()로 결과를 처리하세요
   //   .then: addLog("log1", "🎉 성공! 숫자: " + num)
   //   .catch: addLog("log1", "😢 실패! 숫자: " + num)
+  rollDice()
+    .then((num) => addLog("log1", "🎉 성공! 숫자: " + num))
+    .catch((num) => addLog("log1", "😢 실패! 숫자: " + num));
 
   // 예상 출력 (1초 후, 랜덤):
   // 🎉 성공! 숫자: 5   (4, 5, 6 중 하나)
@@ -111,6 +118,12 @@ function test2a() {
   // TODO: fetchUser(123)을 호출하고
   //   .then(): addLog("log2", "이름: " + user.name) 과 addLog("log2", "이메일: " + user.email) 출력
   //   .catch(): addLog("log2", "에러: " + error) 출력
+  fetchUser(123)
+    .then((user) => {
+      addLog("log2", "이름: " + user.name);
+      addLog("log2", "이메일: " + user.email);
+    })
+    .catch((error) => addLog("log2", "에러: " + error));
 
   // 예상 출력 (1초 후):
   // 이름: 홍길동123
@@ -125,6 +138,9 @@ function test2b() {
   // TODO: fetchUser(-1)을 호출하고
   //   .then(): addLog("log2", "이름: " + user.name) 출력
   //   .catch(): addLog("log2", "❌ 에러: " + error) 출력
+  fetchUser(-1)
+    .then((user) => addLog("log2", "이름: " + user.name))
+    .catch((error) => addLog("log2", "❌ 에러: " + error));
 
   // 예상 출력 (1초 후):
   // ❌ 에러: 잘못된 사용자 ID: -1
@@ -136,14 +152,16 @@ function test2b() {
 
 // TODO: test3 함수를 async 함수로 만들고, await를 사용하세요
 
-function test3() {
+async function test3() {
   console.log("\n=== 테스트 3: async/await 기본 ===");
   clearLog("log3");
   addLog("log3", "사용자 조회 중...");
 
   // TODO: 아래에 await를 사용하여 fetchUser(42)의 결과를 받으세요
   // hint: 이 함수 자체를 async로 바꿔야 합니다!
-
+  const user = await fetchUser(42);
+  addLog("log3", "이름: " + user.name);
+  addLog("log3", "이메일: " + user.email);
   // addLog("log3", "이름: " + user.name) 출력
   // addLog("log3", "이메일: " + user.email) 출력
 
@@ -157,7 +175,7 @@ function test3() {
 // ==========================================
 
 // TODO: test4 함수를 async 함수로 만들고, try/catch/finally를 사용하세요
-function test4(userId) {
+async function test4(userId) {
   console.log("\n=== 테스트 4: 에러 처리 ===");
   clearLog("log4");
 
@@ -174,6 +192,15 @@ function test4(userId) {
   // finally:
   //   - loading.classList.remove("show")
   //   - addLog("log4", "작업 완료 (성공이든 실패든)")
+  try {
+    const user = await fetchUser(userId);
+    addLog("log4", "✅ 성공! 이름: " + user.name);
+  } catch (error) {
+    addLog("log4", "❌ 에러: " + error);
+  } finally {
+    loading.classList.remove("show");
+    addLog("log4", "작업 완료 (성공이든 실패든)");
+  }
 
   // 예상 출력 (성공 시):
   // ✅ 성공! 이름: 홍길동5
@@ -201,6 +228,22 @@ function test5() {
   addLog("log5", "체이닝 시작!");
 
   // TODO: fetchUser → fetchOrders → fetchOrderDetail 순서로 .then() 체이닝하세요
+  fetchUser(1)
+    .then((user) => {
+      addLog("log5", "1단계 - 사용자: " + user.name);
+      return fetchOrders(user.id);
+    })
+    .then((orders) => {
+      addLog("log5", "2단계 - 주문 수: " + orders.length);
+      return fetchOrderDetail(orders[0].id);
+    })
+    .then((detail) => {
+      addLog(
+        "log5",
+        "3단계 - 상품: " + detail.item + ", 상태: " + detail.status,
+      );
+    })
+    .catch((error) => addLog("log5", "에러: " + error));
   //
   // 1단계: fetchUser(1) 호출
   //   → then 콜백의 매개변수: user
@@ -249,10 +292,21 @@ function test5() {
 //   });
 //
 // hint: function → async function, .then() → await, .catch() → try/catch
-function test6() {
+
+async function test6() {
   console.log("\n=== 테스트 6: async/await로 변환 ===");
   clearLog("log6");
   addLog("log6", "순차 조회 시작!");
+  try {
+    const user = await fetchUser(1); //-1로 에러 체크
+    addLog("log6", "1단계 - 사용자: " + user.name);
+    const orders = await fetchOrders(user.id);
+    addLog("log6", "2단계 - 주문 수: " + orders.length);
+    const detail = await fetchOrderDetail(orders[0].id);
+    addLog("log6", "3단계 - 상품: " + detail.item + ", 상태:" + detail.status);
+  } catch (error) {
+    addLog("log6", "에러: " + error);
+  }
 
   // 예상 출력 (섹션 5와 동일):
   // 1단계 - 사용자: 홍길동1
@@ -265,7 +319,7 @@ function test6() {
 // ==========================================
 
 // TODO: test7을 async 함수로 만드세요
-function test7() {
+async function test7() {
   console.log("\n=== 테스트 7: Promise.all 병렬 실행 ===");
   clearLog("log7");
 
@@ -278,17 +332,22 @@ function test7() {
   // 구조분해 할당으로 받으면: const [a, b, c] = await Promise.all([ ... ])
   //
   // 동시에 실행할 Promise 3개: fetchUser(1), fetchUser(2), fetchUser(3)
+  const [user1, user2, user3] = await Promise.all([
+    fetchUser(1),
+    fetchUser(2),
+    fetchUser(3),
+  ]);
   //
   // 결과를 받은 뒤 아래 코드를 그대로 사용하세요:
   //
-  // addLog("log7", "사용자1: " + user1.name);
-  // addLog("log7", "사용자2: " + user2.name);
-  // addLog("log7", "사용자3: " + user3.name);
-  // updateCard("card-1", user1);
-  // updateCard("card-2", user2);
-  // updateCard("card-3", user3);
-  // console.timeEnd("병렬 실행");
-  // addLog("log7", "✅ 모든 조회 완료! (약 1초 — 동시에 실행했으니까!)");
+  addLog("log7", "사용자1: " + user1.name);
+  addLog("log7", "사용자2: " + user2.name);
+  addLog("log7", "사용자3: " + user3.name);
+  updateCard("card-1", user1);
+  updateCard("card-2", user2);
+  updateCard("card-3", user3);
+  console.timeEnd("병렬 실행");
+  addLog("log7", "✅ 모든 조회 완료! (약 1초 — 동시에 실행했으니까!)");
 
   // 예상 출력 (약 1초 후, 3개 동시):
   // 사용자1: 홍길동1
